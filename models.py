@@ -38,8 +38,7 @@ def setup_dynamodb(models, region=DB_REGION, access_key=DB_KEY,
     )
 
     # Register models with the engine so it can create Dynamo tables
-    for model in models:
-        engine.register(model)
+    engine.register(*models)
 
     # Create the dynamo table for our registered models
     engine.create_schema()
