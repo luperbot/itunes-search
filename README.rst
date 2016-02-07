@@ -6,8 +6,16 @@ Overview
 
 Exploring app store metadata.
 
-Running
--------
+Installing and Running DynamoDB Local
+-------------------------------------
+
+.. code:: bash
+
+    $ brew install dynamodb-local
+    $ /usr/local/bin/dynamodb-local
+
+Running Tests
+-------------
 
 .. code:: bash
 
