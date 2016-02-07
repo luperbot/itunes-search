@@ -14,10 +14,18 @@ def setup_dynamodb(models, region=DB_REGION, access_key=DB_KEY,
                    secret_key=DB_SECRET, host=DB_HOST, port=DB_PORT,
                    is_secure=DB_SECURE):
     """
-    Setups DynamoDB Local and registers models.
-    Pass function a list of models to register.
-    """
+    Setups DynamoDB Local and registers flywheel models.
 
+    Parameters:
+        models : list
+            List of flywheel models to register
+        region : str, optional
+        access_key : str, optional
+        secret_key : str, optional
+        host : str, optional
+        port : int, optional
+        is_secure : bool, optional
+    """
     # Create an engine and connect to DynamoDB Local
     engine = Engine()
     engine.connect(
