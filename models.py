@@ -1,7 +1,6 @@
 from datetime import datetime
 from time import strptime, mktime
 
-import requests
 from flywheel import Model, Field, Engine
 from flywheel.fields import types
 
@@ -81,9 +80,6 @@ class AppDetails(Model):
                 value = datetime.fromtimestamp(mktime(value))
             setattr(self, field, value)
 
-    def save(self, overwrite=True):
-        engine.save(self, overwrite=overwrite)
-
 
 def setup_dynamodb(models, region=DB_REGION, access_key=DB_KEY,
                    secret_key=DB_SECRET, host=DB_HOST, port=DB_PORT,
@@ -120,27 +116,4 @@ def setup_dynamodb(models, region=DB_REGION, access_key=DB_KEY,
     return engine
 
 
-def load_app_details(app_ids, countries):
-    for app_id in app_ids:
-        for country in countries:
-            data = get_app_data(app_id, country)
-            app_details = AppDetails(app_id, country, data=data)
-            app_details.save()
-
-
-def get_app_data(app_id, country):
-    params = {'id': app_id, 'country': country}
-    response = requests.get(STORE_LOOKUP_URL, params=params)
-    data = response.json()['results']
-    if not data:
-        return
-    return data[0]
-
-
 engine = setup_dynamodb([AppDetails])
-
-
-if __name__ == '__main__':
-    app_ids = [726232588, 328412701, 651510680]
-    countries = ['us', 'mx', 'jp', 'kr', 'ru', 'fr', 'de']
-    load_app_details(app_ids, countries)
