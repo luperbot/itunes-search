@@ -41,20 +41,47 @@ class AppDetailsTestCase(unittest.TestCase):
         self.assertIsNone(app_details)
 
 
+class SearchTestCase(unittest.TestCase):
+    """
+    Example queries to test filtering/search of items in AppDetails table.
+
+    Do not use table scans. They do not use indexes, instead they search by
+    reading every item in the table. Extremely slow.
+    """
+
+    def test_free_or_cheap(self):
+        print("Find all apps that are free or a price from $1.50 to $3.50.")
+
+    def test_ipad2(self):
+        print("Find all apps that work on any model of iPad2.")
+
+
 def load_app_details(app_ids, countries):
+    """
+    Queries external app store API for avaliable data for each
+    app_id/countries combination.
+    If data found, saves details in the AppDetails table.
+    """
     for app_id in app_ids:
         for country in countries:
             data = get_app_data(app_id, country)
+            if not data:
+                continue
             app_details = AppDetails(app_id, country, data=data)
             engine.save(app_details, overwrite=True)
 
 
 def get_app_data(app_id, country):
+    """
+    Makes a request to the app store API for given app_id (int)
+    and country code (str).
+    Returns a dictionary of any found data.
+    """
     params = {'id': app_id, 'country': country}
     response = requests.get(STORE_LOOKUP_URL, params=params)
     data = response.json()['results']
     if not data:
-        return
+        return {}
     return data[0]
 
 
