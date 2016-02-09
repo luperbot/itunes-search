@@ -72,7 +72,12 @@ class SearchTestCase(unittest.TestCase):
         self.print_prices([free_apps, cheap_apps])
 
     def test_ipad2(self):
-        print("\nFind all apps that work on any model of iPad2.")
+        print("\nFind all apps that work on any model of iPodTouchFourthGen.")
+        ipod_apps = engine(AppDetails).filter(
+            AppDetails.supportediPod == 1,
+            AppDetails.supportediPods.contains_('iPodTouchFourthGen')
+            ).index('ipod-index').all()
+        self.print_prices([ipod_apps])
 
 
 def load_app_details(app_ids, countries):

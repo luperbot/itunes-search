@@ -1,7 +1,7 @@
 from datetime import datetime
 from time import strptime, mktime
 
-from flywheel import Model, Field, Engine, GlobalIndex
+from flywheel import Model, Field, Engine, GlobalIndex, set_
 from flywheel.fields import types
 
 # Testing configuration values
@@ -18,7 +18,10 @@ STORE_LOOKUP_URL = 'https://itunes.apple.com/lookup'
 class AppDetails(Model):
     __metadata__ = {
         'global_indexes': [
-            GlobalIndex('price-index', 'priceFree', 'price')
+            GlobalIndex('price-index', 'priceFree', 'price'),
+            GlobalIndex('iphone-index', 'supportediPhone'),
+            GlobalIndex('ipad-index', 'supportediPad'),
+            GlobalIndex('ipod-index', 'supportediPod'),
         ],
     }
     app_id = Field(data_type=types.IntType, hash_key=True, coerce=True)
@@ -60,7 +63,13 @@ class AppDetails(Model):
     screenshotUrls = Field(data_type=types.ListType)
     sellerName = Field(data_type=types.StringType)
     sellerUrl = Field(data_type=types.StringType)
-    supportedDevices = Field(data_type=types.ListType)
+    supportedDevices = Field(data_type=set_(str), coerce=True)
+    supportediPad = Field(data_type=types.IntType, default=0)
+    supportediPads = Field(data_type=set_(str))
+    supportediPhone = Field(data_type=types.IntType, default=0)
+    supportediPhones = Field(data_type=set_(str))
+    supportediPod = Field(data_type=types.IntType, default=0)
+    supportediPods = Field(data_type=set_(str))
     trackCensoredName = Field(data_type=types.StringType)
     trackContentRating = Field(data_type=types.StringType)
     trackId = Field(data_type=types.IntType, coerce=True)
@@ -87,6 +96,31 @@ class AppDetails(Model):
             setattr(self, field, value)
         if not self.price:
             self.priceFree = 1
+        if self.supportedDevices:
+            self.index_devices()
+
+    def index_devices(self):
+        ipads = set()
+        ipods = set()
+        iphones = set()
+
+        for device in self.supportedDevices:
+            if device.startswith('iPad'):
+                ipads.add(device)
+            elif device.startswith('iPod'):
+                ipods.add(device)
+            else:
+                iphones.add(device)
+
+        if ipods:
+            self.supportediPod = 1
+            self.supportediPods = ipods
+        if ipads:
+            self.supportediPad = 1
+            self.supportediPads = ipads
+        if iphones:
+            self.supportediPhone = 1
+            self.supportediPhones = iphones
 
 
 def setup_dynamodb(models, region=DB_REGION, access_key=DB_KEY,
