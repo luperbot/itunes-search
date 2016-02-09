@@ -111,6 +111,10 @@ def setup_dynamodb(models, region=DB_REGION, access_key=DB_KEY,
     # Register models with the engine so it can create Dynamo tables
     engine.register(*models)
 
+    # Drop any existing schema in the database, so we can sync it up with
+    # current schema. This is only for development.
+    engine.delete_schema()
+
     # Create the dynamo table for our registered models
     engine.create_schema()
     return engine
