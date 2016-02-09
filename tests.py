@@ -49,11 +49,30 @@ class SearchTestCase(unittest.TestCase):
     reading every item in the table. Extremely slow.
     """
 
+    def setUp(self):
+        engine.save(AppDetails(100000000, 'us', {'price': 1.50}), overwrite=True)
+        engine.save(AppDetails(100000000, 'ca', {'price': 5.00}), overwrite=True)
+        engine.save(AppDetails(100000000, 'in', {'price': 3.50}), overwrite=True)
+        engine.save(AppDetails(100000000, 'mx', {'price': 1.25}), overwrite=True)
+        engine.save(AppDetails(100000000, 'sa', {'price': 0}), overwrite=True)
+
+    def print_prices(self, found_apps):
+        for results in found_apps:
+            for app_details in results:
+                print "\tApp ID: %s, Country: %s, Price: %s" % (
+                    app_details.app_id, app_details.country, app_details.price
+                )
+
     def test_free_or_cheap(self):
-        print("Find all apps that are free or a price from $1.50 to $3.50.")
+        print("\nFind all apps that are free or a price from $1.50 to $3.50.")
+        free_apps = engine(AppDetails).filter(priceFree=1).index('price-index').all()
+        cheap_apps = engine(AppDetails).filter(priceFree=0) \
+            .filter(AppDetails.price.between_(1.50, 3.50)) \
+            .index('price-index').all()
+        self.print_prices([free_apps, cheap_apps])
 
     def test_ipad2(self):
-        print("Find all apps that work on any model of iPad2.")
+        print("\nFind all apps that work on any model of iPad2.")
 
 
 def load_app_details(app_ids, countries):
@@ -68,7 +87,7 @@ def load_app_details(app_ids, countries):
             if not data:
                 continue
             app_details = AppDetails(app_id, country, data=data)
-            engine.save(app_details, overwrite=True)
+            engine.save(app_details)
 
 
 def get_app_data(app_id, country):

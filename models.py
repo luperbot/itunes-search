@@ -1,7 +1,7 @@
 from datetime import datetime
 from time import strptime, mktime
 
-from flywheel import Model, Field, Engine
+from flywheel import Model, Field, Engine, GlobalIndex
 from flywheel.fields import types
 
 # Testing configuration values
@@ -16,8 +16,13 @@ STORE_LOOKUP_URL = 'https://itunes.apple.com/lookup'
 
 
 class AppDetails(Model):
+    __metadata__ = {
+        'global_indexes': [
+            GlobalIndex('price-index', 'priceFree', 'price')
+        ],
+    }
     app_id = Field(data_type=types.IntType, hash_key=True, coerce=True)
-    country = Field(data_type=types.StringType)
+    country = Field(data_type=types.StringType, range_key=True)
     advisories = Field(data_type=types.ListType)
     artistId = Field(data_type=types.IntType, coerce=True)
     artistName = Field(data_type=types.StringType)
@@ -27,8 +32,8 @@ class AppDetails(Model):
     artworkUrl60 = Field(data_type=types.StringType)
     averageUserRating = Field(data_type=types.FloatType, coerce=True)
     averageUserRatingForCurrentVersion = Field(
-            data_type=types.FloatType,
-            coerce=True
+        data_type=types.FloatType,
+        coerce=True
     )
     bundleId = Field(data_type=types.StringType)
     contentAdvisoryRating = Field(data_type=types.StringType)
@@ -47,6 +52,7 @@ class AppDetails(Model):
     languageCodesISO2A = Field(data_type=types.ListType)
     minimumOsVersion = Field(data_type=types.StringType)
     price = Field(data_type=types.FloatType, coerce=True)
+    priceFree = Field(data_type=types.IntType, default=0)
     primaryGenreId = Field(data_type=types.IntType, coerce=True)
     primaryGenreName = Field(data_type=types.StringType)
     releaseDate = Field(data_type=types.DateTimeType, coerce=True)
@@ -62,8 +68,8 @@ class AppDetails(Model):
     trackViewUrl = Field(data_type=types.StringType)
     userRatingCount = Field(data_type=types.IntType, coerce=True)
     userRatingCountForCurrentVersion = Field(
-            data_type=types.IntType,
-            coerce=True
+        data_type=types.IntType,
+        coerce=True
     )
     version = Field(data_type=types.StringType)
     wrapperType = Field(data_type=types.StringType)
@@ -79,6 +85,8 @@ class AppDetails(Model):
                 value = strptime(value, "%Y-%m-%dT%H:%M:%SZ")
                 value = datetime.fromtimestamp(mktime(value))
             setattr(self, field, value)
+        if not self.price:
+            self.priceFree = 1
 
 
 def setup_dynamodb(models, region=DB_REGION, access_key=DB_KEY,
