@@ -18,7 +18,7 @@ STORE_LOOKUP_URL = 'https://itunes.apple.com/lookup'
 class AppDetails(Model):
     __metadata__ = {
         'global_indexes': [
-            GlobalIndex('price-index', 'priceFree', 'price'),
+            GlobalIndex('price-index', 'currency', 'price'),
             GlobalIndex('iphone-index', 'supportediPhone'),
             GlobalIndex('ipad-index', 'supportediPad'),
             GlobalIndex('ipod-index', 'supportediPod'),
@@ -55,7 +55,6 @@ class AppDetails(Model):
     languageCodesISO2A = Field(data_type=types.ListType)
     minimumOsVersion = Field(data_type=types.StringType)
     price = Field(data_type=types.FloatType, coerce=True)
-    priceFree = Field(data_type=types.IntType, default=0)
     primaryGenreId = Field(data_type=types.IntType, coerce=True)
     primaryGenreName = Field(data_type=types.StringType)
     releaseDate = Field(data_type=types.DateTimeType, coerce=True)
@@ -83,6 +82,11 @@ class AppDetails(Model):
     version = Field(data_type=types.StringType)
     wrapperType = Field(data_type=types.StringType)
 
+    def __repr__(self):
+        return "%s (%s) selling for %s %s" % (
+            self.app_id, self.country, self.price, self.currency
+        )
+
     def __init__(self, app_id, country, data=None):
         if data is None:
             data = {}
@@ -94,8 +98,6 @@ class AppDetails(Model):
                 value = strptime(value, "%Y-%m-%dT%H:%M:%SZ")
                 value = datetime.fromtimestamp(mktime(value))
             setattr(self, field, value)
-        if not self.price:
-            self.priceFree = 1
         if self.supportedDevices:
             self.index_devices()
 
