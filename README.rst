@@ -20,4 +20,8 @@ Running Tests
 .. code:: bash
 
     $ pip install -r requirements.txt
+    # Run all tests, including requesting data and loading
+    # intial data.
+    $ python tests.py
+    # Run only tests
     $ python -m unittest tests
