@@ -15,6 +15,10 @@ DB_SECURE = False
 STORE_LOOKUP_URL = 'https://itunes.apple.com/lookup'
 
 
+class InValidDeviceName(Exception):
+    pass
+
+
 class AppDetails(Model):
     __metadata__ = {
         'global_indexes': [
@@ -123,6 +127,51 @@ class AppDetails(Model):
         if iphones:
             self.supportediPhone = 1
             self.supportediPhones = iphones
+
+    @classmethod
+    def with_price(cls, currency, lower_price, higher_price=None):
+        """
+        Finds all apps based on currency and price.
+        If only one price is passed, finds apps with exact price.
+        If higher_price is passed, finds apps within range of lower_price
+        and higher_price.
+        """
+        if higher_price is None:
+            return engine(cls).filter(
+                currency=currency,
+                price=lower_price
+                ).index('price-index').all()
+        return engine(cls).filter(
+            cls.currency == currency,
+            cls.price.between_(lower_price, higher_price)
+            ).index('price-index').all()
+
+    @classmethod
+    def with_supportedDevice(cls, device):
+        """
+        Query method that returns an array of all apps that support the given
+        device name.
+        Device name must start with 'iPod', 'iPad', or 'iPhone', else will
+        raise an error.
+        """
+        if device.startswith('iPod'):
+            device_type = cls.supportediPod
+            device_list = cls.supportediPods
+            device_index = 'ipod-index'
+        elif device.startswith('iPad'):
+            device_type = cls.supportediPad
+            device_list = cls.supportediPads
+            device_index = 'ipad-index'
+        elif device.startswith('iPhone'):
+            device_type = cls.supportediPhone
+            device_list = cls.supportediPads
+            device_index = 'iphone-index'
+        else:
+            return InValidDeviceName("%s is not a valid device name" % device)
+        return engine(cls).filter(
+            device_type == 1,
+            device_list.contains_(device)
+            ).index(device_index).all()
 
 
 def setup_dynamodb(models, region=DB_REGION, access_key=DB_KEY,

@@ -1,8 +1,6 @@
 import requests
 import unittest
 
-from pprint import pprint
-
 from models import AppDetails, engine, STORE_LOOKUP_URL
 
 
@@ -52,11 +50,21 @@ class SearchTestCase(unittest.TestCase):
     """
 
     def setUp(self):
-        engine.save(AppDetails(100000001, 'us', {'price': 1.50, 'currency': 'USD'}), overwrite=True)
-        engine.save(AppDetails(100000002, 'us', {'price': 5.00, 'currency': 'USD'}), overwrite=True)
-        engine.save(AppDetails(100000003, 'us', {'price': 3.50, 'currency': 'USD'}), overwrite=True)
-        engine.save(AppDetails(100000004, 'us', {'price': 1.25, 'currency': 'USD'}), overwrite=True)
-        engine.save(AppDetails(100000005, 'us', {'price': 0, 'currency': 'USD'}), overwrite=True)
+        engine.save(AppDetails(
+            100000001, 'us', {'price': 1.50, 'currency': 'USD'}),
+            overwrite=True)
+        engine.save(AppDetails(
+            100000002, 'us', {'price': 5.00, 'currency': 'USD'}),
+            overwrite=True)
+        engine.save(AppDetails(
+            100000003, 'us', {'price': 3.50, 'currency': 'USD'}),
+            overwrite=True)
+        engine.save(AppDetails(
+            100000004, 'us', {'price': 1.25, 'currency': 'USD'}),
+            overwrite=True)
+        engine.save(AppDetails(
+            100000005, 'us', {'price': 0, 'currency': 'USD'}),
+            overwrite=True)
 
     def print_apps(self, found_apps):
         for app_details in found_apps:
@@ -64,25 +72,33 @@ class SearchTestCase(unittest.TestCase):
 
     def test_free_or_cheap(self):
         print("\nFind all apps that are free or a price from $1.50 to $3.50.")
-        cheap_apps = engine(AppDetails) \
-            .filter(currency='USD') \
-            .filter(AppDetails.price.between_(1.50, 3.50)) \
-            .index('price-index') \
-            .all()
-        free_apps = engine(AppDetails) \
-            .filter(currency='USD') \
-            .filter(price=0) \
-            .index('price-index') \
-            .all()
-        self.print_apps(cheap_apps + free_apps)
+        cheap_apps = AppDetails.with_price('USD', 1.50, 3.50)
+        free_apps = AppDetails.with_price('USD', 0)
+        found_apps = free_apps + cheap_apps
+        self.print_apps(found_apps)
+
+        # Assert that app details were found.
+        self.assertTrue(found_apps)
+
+        # Assert that found app details match the given params.
+        for app_details in found_apps:
+            self.assertTrue(app_details.currency == 'USD')
+            self.assertTrue(app_details.price == 0 or (
+                (app_details.price >= 1.5) & (app_details.price <= 3.5)
+                ))
 
     def test_ipad2(self):
         print("\nFind all apps that work on any model of iPodTouchFourthGen.")
-        ipod_apps = engine(AppDetails).filter(
-            AppDetails.supportediPod == 1,
-            AppDetails.supportediPods.contains_('iPodTouchFourthGen')
-            ).index('ipod-index').all()
-        self.print_apps(ipod_apps)
+        device = 'iPodTouchFourthGen'
+        supported_apps = AppDetails.with_supportedDevice(device)
+        self.print_apps(supported_apps)
+
+        # Assert that app details were found.
+        self.assertTrue(supported_apps)
+
+        # Assert that found app details match the device given.
+        for app_details in supported_apps:
+            self.assertIn(device, app_details.supportedDevices)
 
 
 def load_app_details(app_ids, countries):
@@ -98,6 +114,7 @@ def load_app_details(app_ids, countries):
                 continue
             app_details = AppDetails(app_id, country, data=data)
             engine.save(app_details)
+
 
 def get_app_data(app_id, country):
     """
